@@ -9,12 +9,31 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int calculateSignature() {
+    std::int32_t secretNumber = 7;
+    std::string usernames = "sindrib23,benjaminr23,oliver23";
+    std::string ip = "130.208.246.98";
+    return 0;
+}
+
+int sendSignaturePort(int port, int signature) {
+    return 0; 
+}
+
+int sendEvilPort(int port, int signature) {
+    return 0; 
+}
+int sendSecretPort(int port, int signature) {
+    return 0; 
+}
+
 int main(int argc, char* argv[]) {
     std::int32_t secretNumber = 7; // 'x00\x00\x00\x07' 
     std::string usernames = "sindrib23,benjaminr23,oliver23";
     std::string ip = "130.208.246.98";
     int secretPort = std::atoi(argv[1]); // SecretPort
-    int signaturePort = std::atoi(argv[2]); // signaturePort
+    int signaturePort = std::atoi(argv[2]); // checksum port 
+    int evilPort = std::atoi(argv[3]); // evilPort // laga 
 
     uint32_t netSignature;
 
@@ -88,6 +107,8 @@ int main(int argc, char* argv[]) {
         uint32_t signature = challenge ^ secretNumber;
         netSignature = htonl(signature);
 
+        printf("%u", signature);
+
         char response[5];
         response[0] = group_id;
         memcpy(response + 1, &netSignature, 4); 
@@ -140,11 +161,42 @@ int main(int argc, char* argv[]) {
             return -1; 
         }
 
-        sig_buffer[bytes_received] = '\0';
-
+        sig_buffer[sig_bytes_received] = '\0';
         std::string sig_MessageReceived = sig_buffer;
-
         std::cout << "Message received: " << sig_MessageReceived << std::endl; 
+
+        // ------------- Evil port --------------- 
+        struct sockaddr_in evil_dest_addr; 
+        memset(&evil_dest_addr, 0, sizeof(evil_dest_addr));
+        evil_dest_addr.sin_family = AF_INET; 
+        evil_dest_addr.sin_port = htons(evilPort); // Convert port to network byte order
+        inet_pton(AF_INET, ip.c_str(), &evil_dest_addr.sin_addr); // Convert IP string to binary
+
+        // send message
+        uint32_t evilSignature = signature; 
+        evilSignature |= 0x80000000u;
+        uint32_t netEvilSignature = htonl(evilSignature);
+
+        if (sendto(sock, &netEvilSignature, sizeof(netEvilSignature), 0, (const sockaddr*)&evil_dest_addr, sizeof(evil_dest_addr)) < 0) {
+            perror("sendto signatuePort");
+            close(sock);
+            return -1;
+        }
+
+        // receive message 
+        char evil_buffer[1024];
+        struct sockaddr_in evil_sender_addr;
+        socklen_t evil_sender_addr_len = sizeof(evil_sender_addr);
+        int evil_bytes_received = recvfrom(sock, evil_buffer, sizeof(evil_buffer), 0, (struct sockaddr*)&evil_sender_addr, &evil_sender_addr_len);
+        if (evil_bytes_received < 0) {
+            perror("recvfrom failed, nothing received from port 4011");
+            close(sock);
+            return -1; 
+        }
+
+        evil_buffer[evil_bytes_received] = '\0';
+        std::string evil_MessageReceived = evil_buffer;
+        std::cout << "Message received: " << evil_MessageReceived << std::endl; 
 
         close(sock);
     }
@@ -170,3 +222,6 @@ int main(int argc, char* argv[]) {
 // 15. print secret port
 // 16. close socket
 // 17. return/exit
+
+
+

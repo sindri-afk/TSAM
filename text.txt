@@ -15,22 +15,12 @@ void handlePort4011(const std::string& ip, uint32_t signature);
 
 
 
-secret port:
-
-// 1. get the port - 1
-// 2. create UDP socket -1 
-// 3. set timeout -1 
-// 4. prepare destination address structure -1 
-// 5. build the message - 1 
-// 6. send the message - 1 
-// 7. receive challenge response - 1
-// 8. check if response came from the correct port - ? 
-// 9. parse challenge
-// 10. calculate signature
-// 11. send signature response
-// 12. receive final response (secret port)
-// 13. check if response came from the correct port
-// 14. parse secret port
-// 15. print secret port
-// 16. close socket
-// 17. return/exit
+// checksum port:
+/*
+Message sent back after sending it the signature:
+Hello group 34! To get the secret phrase, reply to this message 
+with a UDP message where the payload is an encapsulated, valid UDP IPv4 packet, 
+that has a valid UDP checksum of 0x9468, and with the source address being 116.236.164.154! 
+(Hint: all you need is a normal UDP socket which you use to send the IPv4 and UDP headers possibly with a payload) 
+(the last 6 bytes of this message contain the checksum and ip address in network byte order for your convenience)
+*/
