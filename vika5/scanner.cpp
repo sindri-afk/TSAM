@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
 
     int secretPort = -1;
     int signaturePort = -1;
+    int evilPort = -1; 
 
     // 2. Loop over each port in the range
     for (int port = low_port; port<=high_port; port++) { 
@@ -33,8 +34,8 @@ int main(int argc, char* argv[]) {
 
         // b. Set socket timeout
         struct timeval tv;
-        tv.tv_sec = 0;
-        tv.tv_usec = 500000;
+        tv.tv_sec = 1;
+        tv.tv_usec = 0;
         setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
         // c. Prepare destination address structure
@@ -65,6 +66,8 @@ int main(int argc, char* argv[]) {
                 secretPort = port; 
             } else if (strstr(buffer, "Send me a 4-byte message containing the signature") != nullptr) {
                 signaturePort = port;  // Port 4011
+            } else if (strstr(buffer, "The dark side of network programming is a pathway to many ") != nullptr) {
+                evilPort = port; 
             }
         }
 
@@ -74,7 +77,7 @@ int main(int argc, char* argv[]) {
         close(sock);
 
     }
-    std::string command = "./puzzlesolver " + std::to_string(secretPort) + " " + std::to_string(signaturePort);
+    std::string command = "./puzzlesolver " + std::to_string(secretPort) + " " + std::to_string(signaturePort) + " " + std::to_string(evilPort);
     int result = system(command.c_str());
     if (result < 0) {
         perror("Running ./puzzlesolver <portnum> failed!!!");
