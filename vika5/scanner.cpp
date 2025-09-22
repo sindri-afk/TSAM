@@ -6,8 +6,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <stdlib.h>
+
 
 int main(int argc, char* argv[]) {
+    system("clear");
     // 1. Parse command-line arguments (IP, low port, high port)
     if (argc != 4) {
         std::cerr << "Usage: " << argv[0] << " <IP address> <low port> <high [port]>\n";
@@ -61,17 +64,16 @@ int main(int argc, char* argv[]) {
         // f. If response received, print port and response
         if (bytes_received > 0) {
             buffer[bytes_received] = '\0'; // must add after the last received byte to print as string
+            std::cout << "\n" << std::endl; // here I want to print a new line, to separate the ports that respond
             std::cout << "Port " << port << " responded: " << buffer << std::endl;
             if (strstr(buffer, "Greetings from S.E.C.R.E.T.") != nullptr) {
                 secretPort = port; 
             } else if (strstr(buffer, "Send me a 4-byte message containing the signature") != nullptr) {
-                signaturePort = port;  // Port 4011
+                signaturePort = port;  
             } else if (strstr(buffer, "The dark side of network programming is a pathway to many ") != nullptr) {
                 evilPort = port; 
             }
         }
-
-
 
         // g. Close socket
         close(sock);

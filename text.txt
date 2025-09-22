@@ -1,8 +1,12 @@
 Our secret num is:
 std::int32_t secretNum = 7;
 
+
+
 std::string username = "sindrib23,benjaminr23,oliver23";
 
+
+Signature-ið er síðan: 3096433192
 
 Message received: "���/
 Group ID: 34, Challenge: 3096433199

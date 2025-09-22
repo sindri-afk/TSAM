@@ -1,0 +1,64 @@
+
+        // ---------- PORT number 2!!! --------------
+        // here we send port 4011 the signature.
+        // create destination address
+        struct sockaddr_in sig_dest_addr; 
+        memset(&sig_dest_addr, 0, sizeof(sig_dest_addr));
+        sig_dest_addr.sin_family = AF_INET; 
+        sig_dest_addr.sin_port = htons(signaturePort); // Convert port to network byte order
+        inet_pton(AF_INET, ip.c_str(), &sig_dest_addr.sin_addr); // Convert IP string to binary
+
+        // send message
+        if (sendto(sock, &netSignature, sizeof(netSignature), 0, (const sockaddr*)&sig_dest_addr, sizeof(sig_dest_addr)) < 0) {
+            perror("sendto signatuePort");
+            close(sock);
+            return -1;
+        }
+
+        // receive message 
+        char sig_buffer[1024];
+        struct sockaddr_in sig_sender_addr;
+        socklen_t sig_sender_addr_len = sizeof(sig_sender_addr);
+        int sig_bytes_received = recvfrom(sock, sig_buffer, sizeof(sig_buffer), 0, (struct sockaddr*)&sig_sender_addr, &sig_sender_addr_len);
+        if (sig_bytes_received < 0) {
+            perror("recvfrom failed, nothing received from port 4011");
+            close(sock);
+            return -1; 
+        }
+
+        sig_buffer[sig_bytes_received] = '\0';
+        std::string sig_MessageReceived = sig_buffer;
+        std::cout << "Message received: " << sig_MessageReceived << std::endl; 
+
+        // ------------- Evil port --------------- 
+        struct sockaddr_in evil_dest_addr; 
+        memset(&evil_dest_addr, 0, sizeof(evil_dest_addr));
+        evil_dest_addr.sin_family = AF_INET; 
+        evil_dest_addr.sin_port = htons(evilPort); // Convert port to network byte order
+        inet_pton(AF_INET, ip.c_str(), &evil_dest_addr.sin_addr); // Convert IP string to binary
+
+        // send message
+        uint32_t evilSignature = signature; 
+        evilSignature |= 0x80000000u;
+        uint32_t netEvilSignature = htonl(evilSignature);
+
+        if (sendto(sock, &netEvilSignature, sizeof(netEvilSignature), 0, (const sockaddr*)&evil_dest_addr, sizeof(evil_dest_addr)) < 0) {
+            perror("sendto signatuePort");
+            close(sock);
+            return -1;
+        }
+
+        // receive message 
+        char evil_buffer[1024];
+        struct sockaddr_in evil_sender_addr;
+        socklen_t evil_sender_addr_len = sizeof(evil_sender_addr);
+        int evil_bytes_received = recvfrom(sock, evil_buffer, sizeof(evil_buffer), 0, (struct sockaddr*)&evil_sender_addr, &evil_sender_addr_len);
+        if (evil_bytes_received < 0) {
+            perror("recvfrom failed, nothing received from port 4011");
+            close(sock);
+            return -1; 
+        }
+
+        evil_buffer[evil_bytes_received] = '\0';
+        std::string evil_MessageReceived = evil_buffer;
+        std::cout << "Message received: " << evil_MessageReceived << std::endl; 
