@@ -9,37 +9,28 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// struct ip_header {
-//     uint8_t ip_hl:4; 
-//     uint8_t ip_v:4;
-//     uint8_t ip_tos;
-//     uint16_t ip_len;
-//     uint16_t ip_id;
-//     uint16_t ip_off;
-//     uint8_t ip_ttl;
-//     uint8_t ip_p;
-//     uint16_t ip_sum;
-//     struct in_addr ip_src; // source address 
-//     struct in_addr ip_dst; // destination address
-// };
+std::uint8_t group_id = 0;
 
-// struct udp_header {
-//     uint16_t uh_sport; // source port
-//     uint16_t uh_dport; // destination port
-//     uint16_t uh_ulen;  // udp length
-//     uint16_t uh_sum;   // udp checksum  
-// };
+struct iphdr {
+    uint8_t ihl:4;
+    uint8_t version:4;
+    uint8_t tos;
+    uint16_t tot_len;
+    uint16_t id;
+    uint16_t frag_off;
+    uint8_t ttl;
+    uint8_t protocol;
+    uint16_t check;
+    uint32_t saddr;
+    uint32_t daddr;
+} __attribute__((packed)); // this ensures no padding is added by the compiler
 
-// // Checksum function
-// unsigned short checksum(unsigned short *buf, int nwords) {
-//     unsigned long sum;
-//     for (sum = 0; nwords > 0; nwords--) {
-//         sum += *buf++;
-//     }
-//     sum = (sum >> 16) + (sum & 0xffff);
-//     sum += (sum >> 16);
-//     return (unsigned short)(~sum);
-// }
+struct udphdr {
+    uint16_t source;
+    uint16_t dest;
+    uint16_t len;
+    uint16_t check;
+} __attribute__((packed)); 
 
 int getSignature(int secretPort) {
     /*
@@ -52,11 +43,11 @@ int getSignature(int secretPort) {
     6. If your signature is correct, I will respond with a secret port number. Good luck!
     7. Remember to keep your group ID and signature for later, you will need them for
     */
-    std::int32_t secretNumber = 7; 
+    std::uint32_t secretNumber = 7; 
     std::string usernames = "sindrib23,benjaminr23,oliver23";
     std::string ip = "130.208.246.98";
     int target_port = secretPort;
-    uint32_t signature = 0;
+    std::uint32_t signature = 0;
 
     // create a udp socket
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -81,10 +72,10 @@ int getSignature(int secretPort) {
     // create message
     char message[1024];
     message[0] = 'S';
-    uint32_t netSecretNum = htonl(secretNumber); 
+    std::uint32_t netSecretNum = htonl(secretNumber); 
     memcpy(message + 1, &netSecretNum, sizeof(netSecretNum));
-    strcpy(message + 5, usernames.c_str()); // the reason I don't use memcpy here is because usernames is a string, and I want to copy the whole string including the null terminator
-    int message_length = 5 + usernames.length();
+    memcpy(message + 5, usernames.c_str(), usernames.size());
+    int message_length = 5 + usernames.size();
 
     // send message
     if (sendto(sock, message, message_length, 0, (const sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) {
@@ -106,7 +97,7 @@ int getSignature(int secretPort) {
         return -1;
     }
     if (bytes_received == 5) {
-        uint8_t group_id = reply[0]; // the first byte received is the group id
+        group_id = reply[0]; // the first byte received is the group id
         uint32_t challenge;
         memcpy(&challenge, reply + 1, 4); // we are copying the rest of the bytes starting at reply[1], and pasting it into the challenge variable
         
@@ -148,209 +139,127 @@ int getSignature(int secretPort) {
         std::cout << "\n" << std::endl; 
         std::cout << "Port "<< secretPort << ": " << message << std::endl; 
         close(sock);
+        std::cout << "Signature to return: " << signature << std::endl;
         return signature;
     }
     return -1; 
 }
 
-int sendSignaturePort(int port, uint32_t signature) {
-    // here we send the signature port, the signature we got
+std::string sendSignaturePort(int port, uint32_t signature) {
     std::string ip = "130.208.246.98";
-    uint32_t netSignature = htonl(signature); // convert to network byte order
-    // create a UDP socket
+    uint32_t netSignature = htonl(signature);
+
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock < 0) {
+    if (sock < 0) { 
         perror("socket");
-        return -1; 
+        return -1;
     }
 
-    // set timeout
     struct timeval tv;
     tv.tv_sec = 1;
     tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv)); 
 
-    // create destination address
     struct sockaddr_in dest_addr; 
-    memset(&dest_addr, 0, sizeof(dest_addr)); 
+    memset(&dest_addr, 0, sizeof(dest_addr));
     dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(port); // Convert port to network byte order
-    inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr); // Convert
+    dest_addr.sin_port = htons(port); 
+    inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr);
 
-    // create & send message
-
-    ssize_t sent = sendto(sock, &netSignature, sizeof(netSignature), 0, (const sockaddr*)&dest_addr, sizeof(dest_addr));
-    if (sent < 0) { perror("sendto"); close(sock); return -1; }
-    if (sent != (ssize_t)sizeof(netSignature)) {
-        std::cerr << "Only sent " << sent << " bytes\n";
-    }
-
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-
-    // receive the message
-    char buffer[1024];
-    struct sockaddr_in sender_addr;
-    socklen_t sender_addr_len = sizeof(sender_addr);
-    int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
-    if ( bytes_received < 0) {
-        perror("recvfrom evilport");
-        close(sock);
-        return -1; 
-    }  
-
-    buffer[bytes_received] = '\0';
-    std::string messageReceived = buffer;
-    std::cout << "\n" << std::endl; // here I want to print a new line, to separate the ports that respond
-    std::cout << "Message received from the signature port " << port << ": " << messageReceived << std::endl;
+// Send only 4 bytes: signature in network byte order
+if (sendto(sock, &netSignature, sizeof(netSignature), 0, (const sockaddr*)&dest_addr, sizeof(dest_addr)) < 0) {
+    perror("Sending to SignaturePort");
     close(sock);
-    return 0; 
+    return -1; 
 }
 
-// int sendEvilPort(int port, uint32_t signature) {
-//     std::string ip = "130.208.246.98";
-    
-//     // Create a raw socket
-//     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-//     if (sock < 0) {
-//         perror("socket");
-//         return -1;
-//     }
-    
-//     // Enable IP_HDRINCL to build our own IP header
-//     int one = 1;
-//     if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0) {
-//         perror("setsockopt");
-//         close(sock);
-//         return -1;
-//     }
-    
-//     // Calculate packet sizes
-//     const int ip_header_len = sizeof(struct ip_header);
-//     const int udp_header_len = sizeof(struct udp_header);
-//     const int payload_len = sizeof(signature);
-//     const int total_len = ip_header_len + udp_header_len + payload_len;
-    
-//     // Build the packet
-//     char packet[1024];
-//     memset(packet, 0, sizeof(packet));
-    
-//     // Pointers to headers and payload
-//     struct ip_header *ip_hdr = (struct ip_header*)packet;
-//     struct udp_header *udp_hdr = (struct udp_header*)(packet + ip_header_len);
-//     uint32_t *sig_ptr = (uint32_t*)(packet + ip_header_len + udp_header_len);
-    
-//     // Fill IP header
-//     ip_hdr->ip_v = 4;                    // IPv4
-//     ip_hdr->ip_hl = 5;                   // 5 * 4 = 20 bytes
-//     ip_hdr->ip_tos = 0;                  // Type of service
-//     ip_hdr->ip_len = htons(total_len);   // Total length
-//     ip_hdr->ip_id = htons(54321);        // Identification
-//     ip_hdr->ip_off = htons(0x8000);      // Set evil bit (high bit)
-//     ip_hdr->ip_ttl = 64;                 // Time to live
-//     ip_hdr->ip_p = IPPROTO_UDP;          // UDP protocol
-//     ip_hdr->ip_sum = 0;                  // Will calculate checksum
-    
-//     // Set source and destination addresses
-//     inet_pton(AF_INET, "192.168.1.100", &ip_hdr->ip_src);
-//     inet_pton(AF_INET, ip.c_str(), &ip_hdr->ip_dst);
-    
-//     // Calculate IP checksum
-//     ip_hdr->ip_sum = checksum((unsigned short*)ip_hdr, ip_header_len);
-    
-//     // Fill UDP header
-//     udp_hdr->uh_sport = htons(12345);    // Source port
-//     udp_hdr->uh_dport = htons(port);     // Destination port (evil port)
-//     udp_hdr->uh_ulen = htons(udp_header_len + payload_len); // UDP length
-//     udp_hdr->uh_sum = 0;                 // Optional for IPv4
-    
-//     // Add signature payload (network byte order)
-//     *sig_ptr = htonl(signature);
-    
-//     // Set destination address
-//     struct sockaddr_in dest_addr;
-//     memset(&dest_addr, 0, sizeof(dest_addr));
-//     dest_addr.sin_family = AF_INET;
-//     dest_addr.sin_port = htons(port);
-//     inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr);
-    
-//     // Send the packet
-//     ssize_t sent = sendto(sock, packet, total_len, 0, 
-//                          (struct sockaddr*)&dest_addr, sizeof(dest_addr));
-//     if (sent < 0) {
-//         perror("sendto evil port");
-//         close(sock);
-//         return -1;
-//     }
-    
-//     std::cout << "Sent evil packet with signature: " << signature << " to port: " << port << std::endl;
-    
-//     // Wait for response (use a regular socket for receiving)
-//     close(sock); // Close raw socket
-    
-//     // Create a normal UDP socket to receive response
-//     int recv_sock = socket(AF_INET, SOCK_DGRAM, 0);
-//     if (recv_sock < 0) {
-//         perror("socket for receive");
-//         return -1;
-//     }
-    
-//     // Bind to any port
-//     struct sockaddr_in recv_addr;
-//     memset(&recv_addr, 0, sizeof(recv_addr));
-//     recv_addr.sin_family = AF_INET;
-//     recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-//     recv_addr.sin_port = htons(0); // Let OS choose port
-    
-//     if (bind(recv_sock, (struct sockaddr*)&recv_addr, sizeof(recv_addr)) < 0) {
-//         perror("bind");
-//         close(recv_sock);
-//         return -1;
-//     }
-    
-//     // Set timeout
-//     struct timeval tv;
-//     tv.tv_sec = 2;
-//     tv.tv_usec = 0;
-//     setsockopt(recv_sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-    
-//     // Receive response
-//     char buffer[1024];
-//     struct sockaddr_in sender_addr;
-//     socklen_t sender_len = sizeof(sender_addr);
-    
-//     int bytes_received = recvfrom(recv_sock, buffer, sizeof(buffer), 0, 
-//                                  (struct sockaddr*)&sender_addr, &sender_len);
-//     if (bytes_received > 0) {
-//         buffer[bytes_received] = '\0';
-//         std::cout << "Response from evil port: " << buffer << std::endl;
-//     } else {
-//         perror("recvfrom evil port");
-//     }
-    
-//     close(recv_sock);
-//     return 0;
-// }
+    char response[1024];
+    struct sockaddr_in receive_addr; 
+    socklen_t addr_len = sizeof(receive_addr);
 
-int sendChecksumPort(int port, uint32_t signature) {
-    return 0; 
+    int bytes_received = recvfrom(sock, response, sizeof(response) - 1, 0, (struct sockaddr*)&receive_addr, &addr_len);
+    if (bytes_received < 0) {
+        perror("recvfrom");
+        close(sock);
+        return -1;
+    }
+
+    response[bytes_received] = '\0';
+    std::cout << "SignaturePort response: " << response << std::endl;
+
+
+    close(sock);
+    return std::string(response, bytes_received);
+}
+
+uint16_t checksumCalc(const void* data, size_t length) {
+    const uint8_t* b = static_cast<const uint8_t*>(data);
+    uint32_t sum = 0;
+
+    while (length > 1) {
+        uint16_t word = (b[0] << 8) | b[1];
+        sum += word;
+        b += 2;
+        length -= 2;
+    }
+    if (length == 1) { 
+        uint16_t word = (b[0] << 8);
+        sum += word;
+    }
+
+    while (sum >> 16) sum = (sum & 0xFFFF) + (sum >> 16);
+
+    uint16_t res = static_cast<uint16_t>(~sum);
+    if (res == 0) res = 0xFFFF;
+    return res;
+}
+
+int sendChecksumPort(int port, uint32_t signature, const std::string& response) {
+    iphdr ipheader{};
+    ip_header.version = 4; 
+    ip_header.ihl = 5;
+    ip_header.tos = 0;
+    ip_header.tot_len = htons(sizeof(iphdr) + sizeof(udphdr) + response.size());
+    ip_header.id = htons(54321);
+    ip_header.frag_off = 0;
+    ip_header.ttl = 64;
+    ip_header.protocol = IPPROTO_UDP;
+    ip_header.check = 0;
+    ip_header.saddr = src_ip;
+    ip_header.daddr = inet_addr("130.208.246.98");
+
+    udphdr udpheader{};
+    udp_header.source = htons(12345);
+    udp_header.dest = htons(port);
+    udp_header.len = htons(sizeof(udphdr) + response.size());
+    udp_header.check = 0;
+
+    // Calculate checksums
+
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
-    std::int32_t secretNumber = 7; // 'x00\x00\x00\x07' 
+    system("clear");
+    std::uint32_t secretNumber = 7; // 'x00\x00\x00\x07' 
     std::string usernames = "sindrib23,benjaminr23,oliver23";
     std::string ip = "130.208.246.98";
     int secretPort = std::atoi(argv[1]); // SecretPort
-    int signaturePort = std::atoi(argv[2]); // checksum port 
+    int checksumPort = std::atoi(argv[2]); // checksum port
     int evilPort = std::atoi(argv[3]); // evilPort 
 
     uint32_t signature = getSignature(secretPort);
 
-    std::cout << "\n" << std::endl; // here I want to print a new line, to separate the ports that respond
-    std::cout << "Signature to send: " << signature << std::endl;
-    std::cout << "Signature to send in network byte order: " << htonl(signature) << std::endl;
+    // std::cout << "\n" << std::endl; // here I want to print a new line, to separate the ports that respond
+    // std::cout << "Signature to send: " << signature << std::endl;
+    // std::cout << "Signature to send in network byte order: " << htonl(signature) << std::endl;
 
     // sendEvilPort(evilPort, signature);
-    sendSignaturePort(signaturePort, signature);
+    std::cout << "Signature in main: " << signature << std::endl;
+    std::string signatureResponse = sendSignaturePort(checksumPort, signature);
+    std::cout << "Signature response: " << signatureResponse << std::endl;
+
+    sendChecksumPort(checksumPort, signature, signatureResponse);
 
     // std::string message = "S\x00\x00\x00\x00\x07sindrib23,benjaminr23,oliver23";
 
