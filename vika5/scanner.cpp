@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
 
         // b. Set socket timeout
         struct timeval tv;
-        tv.tv_sec = 1;
-        tv.tv_usec = 0;
+        tv.tv_sec = 0;
+        tv.tv_usec = 500000;
         setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
         // c. Prepare destination address structure

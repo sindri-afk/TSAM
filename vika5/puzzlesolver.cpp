@@ -9,6 +9,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+int getSecretPort() {
+    return 0; 
+}
+
 
 int getSignature(int port) {
     /*
@@ -31,8 +35,8 @@ int getSignature(int port) {
 
     // set timeout
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = 500000; 
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
     // create destination address
@@ -102,8 +106,8 @@ int sendSignaturePort(int port, uint32_t signature) {
 
     // set timeout
     struct timeval tv;
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
+    tv.tv_sec = 0;
+    tv.tv_usec = 500000;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
     // create destination address
@@ -144,63 +148,18 @@ int sendSignaturePort(int port, uint32_t signature) {
 
 int sendEvilPort(int port, uint32_t signature) {
     /*
-    Þetta fall fær gefið það port sem segir: The dark side of network programming is a pathway to many
-    það sendir skilaboðin sem við þurfum að senda, og fær til baka skilaboð sem við prentum út
-    1 bita sem er 'E', og næstu 4 bita er signature sem við reiknuðum út í getSignature fallinu
-    4 bita signature er í network byte order
+    Þetta fall fær gefið það port sem segir: The dark side of network programming is a pathway to many abilities...
+    við þurfum að senda signature sem við fengum úr getSignature fallinu, á þetta port, en evil bit verður að vera set.
     */
     std::string ip = "130.208.246.98";
-    // create a UDP socket
+    // create a raw UDP socket
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         perror("socket");
-        return -1; 
+        return -1;
     }
-
-    // set timeout
-    struct timeval tv;
-    tv.tv_sec = 3;
-    tv.tv_usec = 0;
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-
-    // create destination address
-    struct sockaddr_in dest_addr; 
-    memset(&dest_addr, 0, sizeof(dest_addr)); 
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(port); // Convert port to network byte order
-    inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr); // Convert
-
-    // create & send message
-
-    char message[4];
-    memcpy(message, &signature, sizeof(signature)); // copy the 4 bytes of signature into message[0] to message[3]
-
-    ssize_t sent = sendto(sock, message, sizeof(message), 0, (const sockaddr*)&dest_addr, sizeof(dest_addr));
-    if (sent < 0) { perror("sendto"); close(sock); return -1; }
-    if (sent != (ssize_t)sizeof(message)) {
-        std::cerr << "Only sent " << sent << " bytes\n";
-    }
-    std::cout << "Sent 4-byte signature to port " << port << "\n";
-
-    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
-
-
-    // receive the message
-    char buffer[1024];
-    struct sockaddr_in sender_addr;
-    socklen_t sender_addr_len = sizeof(sender_addr);
-    int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
-    if ( bytes_received < 0) {
-        perror("recvfrom evilport");
-        close(sock);
-        return -1; 
-    }  
-
-    buffer[bytes_received] = '\0';
-    std::string messageReceived = buffer;
-    std::cout << "Message received from evil port: " << messageReceived << std::endl;
-    close(sock);
-    return 0; 
+    // Build packet: IP header + UDP header + payload (4 bytes)
+    // Fill IP header
 }
 
 int sendChecksumPort(int port, uint32_t signature) {
