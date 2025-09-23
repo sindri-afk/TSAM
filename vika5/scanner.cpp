@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
     int secretPort = -1;
     int signaturePort = -1;
     int evilPort = -1; 
+    int maxTries = 3; 
 
     // 2. Loop over each port in the range
     for (int port = low_port; port<=high_port; port++) { 
@@ -56,10 +57,15 @@ int main(int argc, char* argv[]) {
         }        
 
         // e. Try to receive a response
-        char buffer[1024];
-        struct sockaddr_in sender_addr;
-        socklen_t sender_addr_len = sizeof(sender_addr);
-        int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
+        // if the port does not respond, check again up to maxTries times
+        int tries = 0;
+        while (maxTries > tries) {
+            char buffer[1024];
+            struct sockaddr_in sender_addr;
+            socklen_t sender_addr_len = sizeof(sender_addr);
+            int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
+        }
+
         
         // f. If response received, print port and response
         if (bytes_received > 0) {
@@ -74,7 +80,6 @@ int main(int argc, char* argv[]) {
                 evilPort = port; 
             }
         }
-
         // g. Close socket
         close(sock);
 
@@ -85,7 +90,6 @@ int main(int argc, char* argv[]) {
         perror("Running ./puzzlesolver <portnum> failed!!!");
         return -1;
     }
-
     // 3. Return/exit
     return 0;
 }

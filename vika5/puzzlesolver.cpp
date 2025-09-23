@@ -9,37 +9,37 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct ip_header {
-    uint8_t ip_hl:4; 
-    uint8_t ip_v:4;
-    uint8_t ip_tos;
-    uint16_t ip_len;
-    uint16_t ip_id;
-    uint16_t ip_off;
-    uint8_t ip_ttl;
-    uint8_t ip_p;
-    uint16_t ip_sum;
-    struct in_addr ip_src; // source address 
-    struct in_addr ip_dst; // destination address
-};
+// struct ip_header {
+//     uint8_t ip_hl:4; 
+//     uint8_t ip_v:4;
+//     uint8_t ip_tos;
+//     uint16_t ip_len;
+//     uint16_t ip_id;
+//     uint16_t ip_off;
+//     uint8_t ip_ttl;
+//     uint8_t ip_p;
+//     uint16_t ip_sum;
+//     struct in_addr ip_src; // source address 
+//     struct in_addr ip_dst; // destination address
+// };
 
-struct udp_header {
-    uint16_t uh_sport; // source port
-    uint16_t uh_dport; // destination port
-    uint16_t uh_ulen;  // udp length
-    uint16_t uh_sum;   // udp checksum  
-};
+// struct udp_header {
+//     uint16_t uh_sport; // source port
+//     uint16_t uh_dport; // destination port
+//     uint16_t uh_ulen;  // udp length
+//     uint16_t uh_sum;   // udp checksum  
+// };
 
-// Checksum function
-unsigned short checksum(unsigned short *buf, int nwords) {
-    unsigned long sum;
-    for (sum = 0; nwords > 0; nwords--) {
-        sum += *buf++;
-    }
-    sum = (sum >> 16) + (sum & 0xffff);
-    sum += (sum >> 16);
-    return (unsigned short)(~sum);
-}
+// // Checksum function
+// unsigned short checksum(unsigned short *buf, int nwords) {
+//     unsigned long sum;
+//     for (sum = 0; nwords > 0; nwords--) {
+//         sum += *buf++;
+//     }
+//     sum = (sum >> 16) + (sum & 0xffff);
+//     sum += (sum >> 16);
+//     return (unsigned short)(~sum);
+// }
 
 int getSignature(int secretPort) {
     /*
@@ -206,130 +206,130 @@ int sendSignaturePort(int port, uint32_t signature) {
     return 0; 
 }
 
-int sendEvilPort(int port, uint32_t signature) {
-    std::string ip = "130.208.246.98";
+// int sendEvilPort(int port, uint32_t signature) {
+//     std::string ip = "130.208.246.98";
     
-    // Create a raw socket
-    int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    if (sock < 0) {
-        perror("socket");
-        return -1;
-    }
+//     // Create a raw socket
+//     int sock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+//     if (sock < 0) {
+//         perror("socket");
+//         return -1;
+//     }
     
-    // Enable IP_HDRINCL to build our own IP header
-    int one = 1;
-    if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0) {
-        perror("setsockopt");
-        close(sock);
-        return -1;
-    }
+//     // Enable IP_HDRINCL to build our own IP header
+//     int one = 1;
+//     if (setsockopt(sock, IPPROTO_IP, IP_HDRINCL, &one, sizeof(one)) < 0) {
+//         perror("setsockopt");
+//         close(sock);
+//         return -1;
+//     }
     
-    // Calculate packet sizes
-    const int ip_header_len = sizeof(struct ip_header);
-    const int udp_header_len = sizeof(struct udp_header);
-    const int payload_len = sizeof(signature);
-    const int total_len = ip_header_len + udp_header_len + payload_len;
+//     // Calculate packet sizes
+//     const int ip_header_len = sizeof(struct ip_header);
+//     const int udp_header_len = sizeof(struct udp_header);
+//     const int payload_len = sizeof(signature);
+//     const int total_len = ip_header_len + udp_header_len + payload_len;
     
-    // Build the packet
-    char packet[1024];
-    memset(packet, 0, sizeof(packet));
+//     // Build the packet
+//     char packet[1024];
+//     memset(packet, 0, sizeof(packet));
     
-    // Pointers to headers and payload
-    struct ip_header *ip_hdr = (struct ip_header*)packet;
-    struct udp_header *udp_hdr = (struct udp_header*)(packet + ip_header_len);
-    uint32_t *sig_ptr = (uint32_t*)(packet + ip_header_len + udp_header_len);
+//     // Pointers to headers and payload
+//     struct ip_header *ip_hdr = (struct ip_header*)packet;
+//     struct udp_header *udp_hdr = (struct udp_header*)(packet + ip_header_len);
+//     uint32_t *sig_ptr = (uint32_t*)(packet + ip_header_len + udp_header_len);
     
-    // Fill IP header
-    ip_hdr->ip_v = 4;                    // IPv4
-    ip_hdr->ip_hl = 5;                   // 5 * 4 = 20 bytes
-    ip_hdr->ip_tos = 0;                  // Type of service
-    ip_hdr->ip_len = htons(total_len);   // Total length
-    ip_hdr->ip_id = htons(54321);        // Identification
-    ip_hdr->ip_off = htons(0x8000);      // Set evil bit (high bit)
-    ip_hdr->ip_ttl = 64;                 // Time to live
-    ip_hdr->ip_p = IPPROTO_UDP;          // UDP protocol
-    ip_hdr->ip_sum = 0;                  // Will calculate checksum
+//     // Fill IP header
+//     ip_hdr->ip_v = 4;                    // IPv4
+//     ip_hdr->ip_hl = 5;                   // 5 * 4 = 20 bytes
+//     ip_hdr->ip_tos = 0;                  // Type of service
+//     ip_hdr->ip_len = htons(total_len);   // Total length
+//     ip_hdr->ip_id = htons(54321);        // Identification
+//     ip_hdr->ip_off = htons(0x8000);      // Set evil bit (high bit)
+//     ip_hdr->ip_ttl = 64;                 // Time to live
+//     ip_hdr->ip_p = IPPROTO_UDP;          // UDP protocol
+//     ip_hdr->ip_sum = 0;                  // Will calculate checksum
     
-    // Set source and destination addresses
-    inet_pton(AF_INET, "192.168.1.100", &ip_hdr->ip_src);
-    inet_pton(AF_INET, ip.c_str(), &ip_hdr->ip_dst);
+//     // Set source and destination addresses
+//     inet_pton(AF_INET, "192.168.1.100", &ip_hdr->ip_src);
+//     inet_pton(AF_INET, ip.c_str(), &ip_hdr->ip_dst);
     
-    // Calculate IP checksum
-    ip_hdr->ip_sum = checksum((unsigned short*)ip_hdr, ip_header_len);
+//     // Calculate IP checksum
+//     ip_hdr->ip_sum = checksum((unsigned short*)ip_hdr, ip_header_len);
     
-    // Fill UDP header
-    udp_hdr->uh_sport = htons(12345);    // Source port
-    udp_hdr->uh_dport = htons(port);     // Destination port (evil port)
-    udp_hdr->uh_ulen = htons(udp_header_len + payload_len); // UDP length
-    udp_hdr->uh_sum = 0;                 // Optional for IPv4
+//     // Fill UDP header
+//     udp_hdr->uh_sport = htons(12345);    // Source port
+//     udp_hdr->uh_dport = htons(port);     // Destination port (evil port)
+//     udp_hdr->uh_ulen = htons(udp_header_len + payload_len); // UDP length
+//     udp_hdr->uh_sum = 0;                 // Optional for IPv4
     
-    // Add signature payload (network byte order)
-    *sig_ptr = htonl(signature);
+//     // Add signature payload (network byte order)
+//     *sig_ptr = htonl(signature);
     
-    // Set destination address
-    struct sockaddr_in dest_addr;
-    memset(&dest_addr, 0, sizeof(dest_addr));
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(port);
-    inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr);
+//     // Set destination address
+//     struct sockaddr_in dest_addr;
+//     memset(&dest_addr, 0, sizeof(dest_addr));
+//     dest_addr.sin_family = AF_INET;
+//     dest_addr.sin_port = htons(port);
+//     inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr);
     
-    // Send the packet
-    ssize_t sent = sendto(sock, packet, total_len, 0, 
-                         (struct sockaddr*)&dest_addr, sizeof(dest_addr));
-    if (sent < 0) {
-        perror("sendto evil port");
-        close(sock);
-        return -1;
-    }
+//     // Send the packet
+//     ssize_t sent = sendto(sock, packet, total_len, 0, 
+//                          (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+//     if (sent < 0) {
+//         perror("sendto evil port");
+//         close(sock);
+//         return -1;
+//     }
     
-    std::cout << "Sent evil packet with signature: " << signature << " to port: " << port << std::endl;
+//     std::cout << "Sent evil packet with signature: " << signature << " to port: " << port << std::endl;
     
-    // Wait for response (use a regular socket for receiving)
-    close(sock); // Close raw socket
+//     // Wait for response (use a regular socket for receiving)
+//     close(sock); // Close raw socket
     
-    // Create a normal UDP socket to receive response
-    int recv_sock = socket(AF_INET, SOCK_DGRAM, 0);
-    if (recv_sock < 0) {
-        perror("socket for receive");
-        return -1;
-    }
+//     // Create a normal UDP socket to receive response
+//     int recv_sock = socket(AF_INET, SOCK_DGRAM, 0);
+//     if (recv_sock < 0) {
+//         perror("socket for receive");
+//         return -1;
+//     }
     
-    // Bind to any port
-    struct sockaddr_in recv_addr;
-    memset(&recv_addr, 0, sizeof(recv_addr));
-    recv_addr.sin_family = AF_INET;
-    recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    recv_addr.sin_port = htons(0); // Let OS choose port
+//     // Bind to any port
+//     struct sockaddr_in recv_addr;
+//     memset(&recv_addr, 0, sizeof(recv_addr));
+//     recv_addr.sin_family = AF_INET;
+//     recv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+//     recv_addr.sin_port = htons(0); // Let OS choose port
     
-    if (bind(recv_sock, (struct sockaddr*)&recv_addr, sizeof(recv_addr)) < 0) {
-        perror("bind");
-        close(recv_sock);
-        return -1;
-    }
+//     if (bind(recv_sock, (struct sockaddr*)&recv_addr, sizeof(recv_addr)) < 0) {
+//         perror("bind");
+//         close(recv_sock);
+//         return -1;
+//     }
     
-    // Set timeout
-    struct timeval tv;
-    tv.tv_sec = 2;
-    tv.tv_usec = 0;
-    setsockopt(recv_sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+//     // Set timeout
+//     struct timeval tv;
+//     tv.tv_sec = 2;
+//     tv.tv_usec = 0;
+//     setsockopt(recv_sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
     
-    // Receive response
-    char buffer[1024];
-    struct sockaddr_in sender_addr;
-    socklen_t sender_len = sizeof(sender_addr);
+//     // Receive response
+//     char buffer[1024];
+//     struct sockaddr_in sender_addr;
+//     socklen_t sender_len = sizeof(sender_addr);
     
-    int bytes_received = recvfrom(recv_sock, buffer, sizeof(buffer), 0, 
-                                 (struct sockaddr*)&sender_addr, &sender_len);
-    if (bytes_received > 0) {
-        buffer[bytes_received] = '\0';
-        std::cout << "Response from evil port: " << buffer << std::endl;
-    } else {
-        perror("recvfrom evil port");
-    }
+//     int bytes_received = recvfrom(recv_sock, buffer, sizeof(buffer), 0, 
+//                                  (struct sockaddr*)&sender_addr, &sender_len);
+//     if (bytes_received > 0) {
+//         buffer[bytes_received] = '\0';
+//         std::cout << "Response from evil port: " << buffer << std::endl;
+//     } else {
+//         perror("recvfrom evil port");
+//     }
     
-    close(recv_sock);
-    return 0;
-}
+//     close(recv_sock);
+//     return 0;
+// }
 
 int sendChecksumPort(int port, uint32_t signature) {
     return 0; 
@@ -349,7 +349,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Signature to send: " << signature << std::endl;
     std::cout << "Signature to send in network byte order: " << htonl(signature) << std::endl;
 
-    sendEvilPort(evilPort, signature);
+    // sendEvilPort(evilPort, signature);
     sendSignaturePort(signaturePort, signature);
 
     // std::string message = "S\x00\x00\x00\x00\x07sindrib23,benjaminr23,oliver23";
