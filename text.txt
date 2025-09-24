@@ -32,3 +32,7 @@ that has a valid UDP checksum of 0x9468, and with the source address being 116.2
 
 
 Message received from the signature port 4080: Hello group 34! To get the secret phrase, reply to this message with a UDP message where the payload is an encapsulated, valid UDP IPv4 packet, that has a valid UDP checksum of 0x16c3, and with the source address being 11.230.21.88! (Hint: all you need is a normal UDP socket which you use to send the IPv4 and UDP headers possibly with a payload) (the last 6 bytes of this message contain the checksum and ip address in network byte order for your convenience)�
+
+
+
+checksum >> 8 | 0x0050 (IP_Header)
