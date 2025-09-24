@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     int secretPort = -1;
     int signaturePort = -1;
     int evilPort = -1; 
-    int maxTries = 3; 
+    int maxTries = 5; 
 
     // 2. Loop over each port in the range
     for (int port = low_port; port<=high_port; port++) { 
@@ -56,16 +56,13 @@ int main(int argc, char* argv[]) {
             // Optionally: continue; or handle the error as needed
         }        
 
-        // e. Try to receive a response
-        // if the port does not respond, check again up to maxTries times
-    
+        // e. Try to receive a response    
         char buffer[1024];
         struct sockaddr_in sender_addr;
         socklen_t sender_addr_len = sizeof(sender_addr);
         int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
         
 
-        
         // f. If response received, print port and response
         if (bytes_received > 0) {
             buffer[bytes_received] = '\0'; // must add after the last received byte to print as string
