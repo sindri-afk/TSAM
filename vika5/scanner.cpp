@@ -58,13 +58,12 @@ int main(int argc, char* argv[]) {
 
         // e. Try to receive a response
         // if the port does not respond, check again up to maxTries times
-        int tries = 0;
-        while (maxTries > tries) {
-            char buffer[1024];
-            struct sockaddr_in sender_addr;
-            socklen_t sender_addr_len = sizeof(sender_addr);
-            int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
-        }
+    
+        char buffer[1024];
+        struct sockaddr_in sender_addr;
+        socklen_t sender_addr_len = sizeof(sender_addr);
+        int bytes_received = recvfrom(sock, buffer, sizeof(buffer), 0, (struct sockaddr*)&sender_addr, &sender_addr_len);
+        
 
         
         // f. If response received, print port and response
