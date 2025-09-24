@@ -36,3 +36,27 @@ Message received from the signature port 4080: Hello group 34! To get the secret
 
 
 checksum >> 8 | 0x0050 (IP_Header)
+
+
+
+
+
+Iterating over a vector:::
+
+    std::vector<int> ports = {port, port + 1, port + 2}; // Example: knocking on three consecutive ports
+    for (int knock_port : ports) {
+        int sock = socket(AF_INET, SOCK_DGRAM, 0);
+        if (sock < 0) {
+            perror("socket");
+            continue;
+        }
+        struct sockaddr_in dest_addr;
+        memset(&dest_addr, 0, sizeof(dest_addr));
+        dest_addr.sin_family = AF_INET;
+        dest_addr.sin_port = htons(knock_port);
+        inet_pton(AF_INET, ip.c_str(), &dest_addr.sin_addr);
+
+        char knock_msg[] = "knock";
+        sendto(sock, knock_msg, sizeof(knock_msg), 0, (struct sockaddr*)&dest_addr, sizeof(dest_addr));
+        close(sock);
+    }
