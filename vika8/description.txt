@@ -1,0 +1,91 @@
+/***************************************************************************************************
+ * Project: Computer Networks – Assignment 3: Peer-to-Peer Botnet Communication System (TSAM 2030)
+ * -----------------------------------------------------------------------------------------------
+ *
+ * OVERVIEW:
+ * This project implements a fault-tolerant, peer-to-peer (P2P) messaging system – a simplified
+ * "botnet" – designed to sustain message delivery across a class-wide simulated network during
+ * a fictional 2030 cyber warfare scenario. Each server instance acts as a node in the botnet,
+ * connecting to other peers to exchange, route, and store messages for disconnected nodes.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * OBJECTIVES:
+ * 1. Develop a TCP-based server ("tsamgroupX") capable of:
+ *    - Maintaining 3–8 simultaneous peer connections (prefer other student servers).
+ *    - Accepting a client connection on the same listening port.
+ *    - Exchanging commands and messages following a strict framed protocol.
+ *    - Storing and forwarding messages across the botnet network.
+ *    - Operating autonomously (no manual console input).
+ *
+ * 2. Develop a TCP client for:
+ *    - Sending commands to its local server (e.g., SENDMSG, GETMSG, LISTSERVERS).
+ *    - Logging all commands/responses with timestamps for traceability.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * COMMUNICATION PROTOCOL:
+ * All inter-server messages follow the format:
+ *      <SOH><length><STX><command><ETX>
+ * where:
+ *    - SOH (0x01), STX (0x02), ETX (0x03) are framing characters.
+ *    - <length> is a 16-bit unsigned integer (network byte order) indicating message size.
+ *
+ * SUPPORTED SERVER COMMANDS:
+ *    HELO,<FROM GROUP ID>              : Initial handshake; expects SERVERS response.
+ *    SERVERS,<server info list>        : Shares 1-hop neighbors.
+ *    KEEPALIVE,<num msgs waiting>      : Periodic heartbeat (≤1/minute).
+ *    GETMSGS,<GROUP ID>                : Request queued messages.
+ *    SENDMSG,<TO>,<FROM>,<message>     : Send or relay a message (≤5000 bytes).
+ *    STATUSREQ / STATUSRESP            : Request/report server state and message queue stats.
+ *
+ * CLIENT COMMANDS:
+ *    GETMSG                            : Retrieve one pending message from server.
+ *    SENDMSG,<GROUP ID>,<message>      : Instruct server to deliver message.
+ *    LISTSERVERS                       : List servers directly connected to this node.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * EXECUTION:
+ *  Compile with provided Makefile.
+ *  Run server as:
+ *        ./tsamgroupX <port>
+ *  Example:
+ *        ./tsamgroup1 4044
+ *  The client connects to the same server port via TCP to issue commands.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * DESIGN REQUIREMENTS:
+ * - No hard-coded IPs or ports (must accept via arguments or client commands).
+ * - Log all traffic (incoming/outgoing) with timestamps and connection details.
+ * - Handle disconnections gracefully; retry or reroute when possible.
+ * - Store undeliverable messages and purge them after expiration if needed.
+ * - Follow the rule: “Be strict in what you send, tolerant in what you receive.”
+ * - Ensure network safety — never overload or crash the botnet/campus network.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * GRADING SUMMARY (100 points):
+ *  - Implementation correctness & autonomy ................. 40
+ *  - Wireshark trace (client-server interaction) ........... 10
+ *  - Incoming connection from peer server .................. 10
+ *  - Message reception from ≥2 groups ....................... 10
+ *  - Message sending to ≥2 groups ........................... 10
+ *  - Submission quality (README, Makefile) ................. 10
+ *  - Code documentation & logging .......................... 10
+ *
+ * BONUS (Up to +50): Early, stable, connected, indirect, or external bot achievements.
+ *
+ * -----------------------------------------------------------------------------------------------
+ * HOW TO COMPLETE:
+ *  1. Implement server socket setup (listen/accept for client + peers).
+ *  2. Implement framed message parsing and command handling.
+ *  3. Manage peer discovery and maintenance (HELO/SERVERS exchange).
+ *  4. Implement message queue for offline/forwarding logic.
+ *  5. Add client interface for testing commands and message flow.
+ *  6. Integrate full logging and error handling.
+ *  7. Test locally, then connect to external TSAM peers (IP: 130.208.246.98, ports 4000–4200).
+ *
+ * -----------------------------------------------------------------------------------------------
+ * NOTES:
+ * - Collaboration between groups is encouraged for testing botnet robustness.
+ * - Follow structured, readable, and well-commented coding style.
+ * - Include a detailed README with build/run instructions and command descriptions.
+ *
+ ***************************************************************************************************/
