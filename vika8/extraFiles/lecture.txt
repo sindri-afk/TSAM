@@ -1,0 +1,21 @@
+what is the difference between udp and tcp? 
+
+it is said that tcp is connection oriented and udp is not. what does that mean?
+
+TCP (Transmission Control Protocol) is connection-oriented, which means that a connection is established between the sender and receiver before data can be sent. This involves a handshake process to ensure that both parties are ready for communication. Once the connection is established, TCP guarantees the delivery of data packets in the correct order and without errors. If any packets are lost or corrupted during transmission, TCP will retransmit them.
+
+On the other hand, UDP (User Datagram Protocol) is connectionless. This means that there is no need to establish a connection before sending data. UDP simply sends packets (called datagrams) to the recipient without checking if they are received or if they arrive in order. This makes UDP faster and more efficient for certain applications, such as video streaming or online gaming, where speed is more critical than reliability.
+
+In summary, the key difference is that TCP provides a reliable, ordered, and error-checked delivery of data, while UDP offers a faster, but less reliable, service without the overhead of establishing a connection.
+
+
+
+
+<SOH><length><STX><command><ETX>
+
+<SOH> Start of Header
+<length> Length of the entire message (including SOH and ETX)
+<STX> Start of Text
+<command> The actual command or data being sent
+<ETX> End of Text
+

@@ -89,3 +89,70 @@
  * - Include a detailed README with build/run instructions and command descriptions.
  *
  ***************************************************************************************************/
+
+
+
+
+
+
+EXPLENATION .......:
+
+"""
+The server must operate autonomously! The server must not accept nor wait for any input
+on the terminal. All communication with the server must happen through TCP sockets. The
+client is only needed for sending and receiving message to/from other groups and potentially
+inspecting and configuring the operations of your server at run-time
+"""
+
+Deepseek: 
+
+Excellent question. This is a key concept for understanding the entire architecture of this botnet.
+
+Let's break it down.
+
+### The "Groups"
+
+In this assignment, a "group" is essentially a team of students (or just one student) who have written a server and client. Each group has a unique identifier, like `A5 1`, `A5 2`, etc.
+
+*   **Your Group:** This is you and your team. Your server's ID is your group ID (e.g., `A5 1`).
+*   **Other Groups:** These are all the other teams in the class. Their servers have IDs like `A5 2`, `A5 3`, `I 99` (an instructor server), etc.
+
+### The Analogy: Post Office vs. Mail Customer
+
+Think of the system like a network of post offices:
+
+*   **Your Server is Your Local Post Office.** It's always running, it has connections to other post offices (other groups' servers), and it knows how to route packages (messages) through the network.
+*   **Your Client is You, the Mail Customer.** You don't run all the time. You go to the post office when you want to send a letter or check your mailbox.
+
+### What the Sentence Means
+
+The sentence means that your **Client** has two main jobs, and both involve communicating with **your own Server**:
+
+1.  **Sending and Receiving Messages to/from Other Groups:**
+    *   **Sending:** When you type `SENDMSG, A5 2, Hello World!` into your client, the client doesn't directly send this to group `A5 2`. Instead, it sends the command to **your server**. Your server's job is then to figure out how to route that message through the botnet until it eventually reaches the server for group `A5 2`.
+    *   **Receiving:** When you type `GETMSG` into your client, the client asks **your server**: "Do you have any messages that other groups have sent to me (our group ID)?" Your server then gives you those messages that it has been storing for you.
+
+    **In short:** Your client talks only to your server. Your server talks to all the other servers in the botnet on your client's behalf.
+
+2.  **Inspecting and Configuring Your Server:**
+    *   **Inspecting:** Using commands like `LISTSERVERS` from your client. This command asks your server, "Which other servers are you currently connected to?" The server replies with the list, and your client displays it for you to see. This is "inspecting" the server's operational state.
+    *   **Configuring:** While not explicitly defined by a command in the PDF, this could mean telling your server to connect to a new peer server. For example, you might have a client command like `CONNECT, 130.208.246.99, 4055` which instructs **your server** to establish a new connection to that IP and port.
+
+### The "Other" Also
+
+You asked about the word "other" in "other groups". This confirms the point above. The "other" refers to any group that is **not your own**.
+
+*   When you **send** a message, it's *from* your group *to* another group.
+*   When you **receive** a message, it's *from* another group *to* your group.
+
+### Summary of Data Flow
+
+**Sending a Message to Group A5 2:**
+`Your Client` ---(SENDMSG, A5 2, Hello!)---> `Your Server` ---(routes through botnet)---> `A5 2's Server`
+
+**Receiving a Message from Group A5 3:**
+`A5 3's Server` ---(routes through botnet)---> `Your Server` ---(stores the message)---> `Your Client` (when you use GETMSG)
+
+So, the client is just a user interface for interacting with your own server, which is the powerful, always-on node that is actually part of the peer-to-peer botnet.
+
+Does this clarify the relationship? You can ask follow-up questions about any part that's still unclear.

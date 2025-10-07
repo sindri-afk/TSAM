@@ -1,0 +1,9 @@
+/bin 
+/obj
+# Ignore Mac system files
+.DS_Store
+# Ignore build files
+build/
+# Ignore compiled binaries
+*.o
+*.out            
