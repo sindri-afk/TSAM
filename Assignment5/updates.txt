@@ -1,0 +1,28 @@
+## sun 12.oct update:
+
+What I have done; 
+- server setup:
+    - Created a TCP socket
+    -  Bind it to a port
+    -  Listen for incoming connections
+    -  Accept connections and print a message when a client connects
+- client setup:
+    - Created a TCP socket
+    - Connected to the server
+    - printed success message
+    - closed socket 
+
+and I have proved that the client can reach the server.
+and that the server recognizes a client connection
+
+
+next steps: 
+1. keep the server running indefinitely, it doesn't shut down after one connection
+2. Accept each connection in a separate thread so multiple clients can connect simultaneously
+3. for now just print "client connected" when a client connects, later we will implement message handling
+
+once that works we have the autonomous server foundation and we can move to:
+1. message framing(pack_messages(), recv_message())
+2. command handling(HELO, SERVERS, KEEPALIVE,N, GETMSGS, SENDMSG, STATUSREQ, STATUSRESP)
+3. peer maintenance logic
+4. logging and in-memory storage 

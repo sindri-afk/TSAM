@@ -59,10 +59,14 @@ Action plan:
 1. Create a TCP server that listens for incoming connections on a specified port.
   - create the TCP server (tsamgroup21.cpp)
     - it listens for incoming connections on a GIVEN port
-    - No logic yet, just accept connections and print a message
+    - No logic yet, just accept connections and print a message 
+DONE!
+
 2. create a simple TCP client (client.cpp)
     - connects to your server (localhost+port)
     - just to test your server listening logic
+DONE!
+
 
 3. Implement message framing functions
     - pack_message() — formats data into <SOH><length><STX>data<ETX>.
