@@ -1,0 +1,123 @@
+# Building a Botnet Communication System in C++
+
+Hey! Let me explain this project in simple terms. We're building a network of communicating servers (like a mini internet) using C++.
+
+## What We're Building
+
+Think of this like creating a messaging system where multiple computers can talk to each other. Each computer runs a "server" program that can:
+- Connect to other servers
+- Send and receive messages
+- Store messages for delivery
+- Keep track of who's connected
+
+## The Big Picture
+
+Imagine you have a group of friends who want to pass messages to each other, but they can only talk to a few friends directly. Those friends then pass messages along to reach everyone. That's exactly what our server network does!
+
+## What We Need to Build
+
+### 1. The Server Program (`tsamgroup21.cpp`)
+This is the main program that:
+- **Listens for connections**: Like having your phone ready to receive calls
+- **Connects to other servers**: Like calling your friends
+- **Manages messages**: Stores and forwards messages between groups
+- **Keeps logs**: Records everything that happens (like a diary)
+
+**Key Features:**
+- Must connect to 3-8 other servers (not too few, not too many)
+- Runs automatically without human input
+- Uses TCP sockets for reliable communication
+
+### 2. The Client Program (`client.cpp`)
+This is like a remote control for the server:
+- Send messages to other groups
+- Check what messages we've received
+- See which servers we're connected to
+
+## How the Communication Works
+
+### Message Format
+All messages between servers follow a strict pattern:
+```
+<SOH><length><STX><command><ETX>
+```
+
+Think of this like addressing an envelope:
+- SOH (0x01): "Hey, message starting!"
+- length: "This message is X bytes long"
+- STX (0x02): "Here's the actual message:"
+- command: The actual message content
+- ETX (0x03): "Message done!"
+
+### Server Commands (What Servers Say to Each Other)
+
+1. **HELO** - "Hi, I'm group X, nice to meet you!"
+2. **SERVERS** - "Here are all the servers I'm connected to"
+3. **KEEPALIVE** - "I'm still here and have X messages waiting for you"
+4. **GETMSGS** - "Give me any messages you have for group X"
+5. **SENDMSG** - "Please deliver this message to group X"
+6. **STATUSREQ/STATUSRESP** - "How are you doing?" / "I'm doing fine, here's my status"
+
+### Client Commands (How We Control Our Server)
+
+1. **GETMSG** - "Give me a message from our inbox"
+2. **SENDMSG** - "Send this message to another group"
+3. **LISTSERVERS** - "Show me who we're connected to"
+
+## How to Build This Project
+
+### Step 1: Compile the Programs
+```bash
+# Use the Makefile to compile everything
+make
+
+# Or compile manually:
+g++ -o tsamgroup21 tsamgroup21.cpp
+g++ -o client client.cpp
+```
+
+### Step 2: Run the Server
+```bash
+# Start the server on port 4044
+./tsamgroup21 4044
+```
+
+### Step 3: Use the Client
+```bash
+# Connect to your server and send commands
+./client
+```
+
+## What Each File Does
+
+- **`tsamgroup21.cpp`**: The main server that handles all networking and message routing
+- **`client.cpp`**: The user interface to interact with your server
+- **`Makefile`**: Instructions for the compiler on how to build everything
+- **`description.txt`**: The project requirements (what the teacher wants)
+- **`README.md`**: Documentation for users (usually)
+
+## Key Programming Concepts You'll Use
+
+1. **TCP Sockets**: For reliable network communication
+2. **Multi-threading**: To handle multiple connections simultaneously
+3. **Message Parsing**: To understand and format the protocol messages
+4. **Data Structures**: To store connected servers and pending messages
+5. **Network Byte Order**: To ensure messages work across different computers
+6. **Logging**: To track what's happening for debugging
+
+## The Challenge
+
+The tricky part is making sure your server can:
+- Handle multiple connections at once
+- Store and forward messages correctly
+- Maintain stable connections with other servers
+- Follow the exact message protocol
+- Work autonomously without crashing
+
+Think of it like being a post office that needs to:
+- Stay connected to other post offices
+- Sort and deliver mail correctly  
+- Keep working 24/7 without supervision
+- Talk to other post offices in a specific language
+
+That's the essence of what we're building - a distributed messaging system that works reliably across a network!

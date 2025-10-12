@@ -1,0 +1,90 @@
+Hvað er verið að gera í þessu verkefni og hvernig er það gert?
+
+A plain language plam of how the system works:
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+FIRSTLY: a very important distinction;
+tsamgroup21.cpp --> Server
+- this is the autonomous botnet node .
+- it runs on a port, listens for connections (from other servers or your client)
+- it never!! takes user input
+- it must listen and respond to commands over the network (HELO, SERVERS,KEEPALIVE, etc.)
+
+client.cpp --> Client
+- this is your local command tool
+-  you run it manually to send commands to your server ( e.g. SENDMSG, GETMSG, LISTSERVERS)
+- it connects to the server using a socket (so client initiates connection, not server)
+
+
+the listening server socket belongs in tsamgroup21.cpp, not in client.cpp
+
+what it does:
+| Role                           | What it does                       | Example                                                   |
+| ------------------------------ | ---------------------------------- | --------------------------------------------------------- |
+| **Server (`tsamgroup21.cpp`)** | Waits for others to connect to it. | “I’m waiting on port 4044 — come talk to me.”             |
+| **Client (`client.cpp`)**      | Actively connects to the server.   | “Hey server at 127.0.0.1:4044, I want to send a message.” |
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+client.cpp is a self-contained server that has these specifications:
+it listens on TCp, it never reads stdin, keeps 3-8 peer connections, logs with timestamps, 
+implements the message framing and the required commands. 
+
+Design overview:
+
+1. Server is autonomous: it never reads stdin, all control comes over TCP so it can be managed remotely (and the client is the management tool)
+2. One TCP port; to accept incoming connections from other servers and the client
+3. Peer connections: server maintains outgoing connections from other servers. Well attempt to maintain between 3 and 8 peers. To avoid
+hardcoding peers,the client can instruct the server to connect to a new peer (ADDPEER,<Name>,<host>,<port>)
+that keeps it flexible.
+4. message framing: this exact framing will be implemented;
+- start: SOH (0x01)
+- lenthg: 16-bit network order length = payload_length + 5 (the spec says length includes the five framin byets)
+- STX (0x02)
+- payload:  ASCII command like HELO,Group5
+- ETX (0x03)
+
+NOTE: We will write helper functions pack_message() and recv_message() to send/receive framed messages robustly: (read exact size, handle partial reads)
+
+5. Concurrancy: one thread for accept(), one thread per connectionn to read messages, one manager thread to maintain peer connections and send periodic KEEPALIVE(no more frequent than once per minute)
+6. Storage: an in-memory map $msgs[groupId] = queue<string>
+stores messaged that should be delivered later. This is simple and meets requirements
+7. logging 
+8. Commands implemented: HELO, SERVERS, KEEPALIVE,N, GETMSGS, SENDMSG, STATUSREQ, STATUSRESP — enough to meet the spec. 
+The server replies where appropriate and stores/forwards messages. The client can request GETMSG, SENDMSG, and LISTSERVERS.
+
+
+Action plan:
+1. Create a TCP server that listens for incoming connections on a specified port.
+  - create the TCP server (tsamgroup21.cpp)
+    - it listens for incoming connections on a GIVEN port
+    - No logic yet, just accept connections and print a message
+2. create a simple TCP client (client.cpp)
+    - connects to your server (localhost+port)
+    - just to test your server listening logic
+
+3. Implement message framing functions
+    - pack_message() — formats data into <SOH><length><STX>data<ETX>.
+    - recv_message() — reads bytes, detects framing, and extracts commands.
+
+4. Add threads:
+    - One thread for accepting new connections.
+    - One thread per client connection to handle messages
+    - One thread for periodic tasks (KEEPALIVE, peer maintenance).
+
+5. Implement command handling: 
+    - HELO / SERVERS / KEEPALIVE / GETMSGS / SENDMSG / STATUSREQ / STATUSRESP.
+
+6. Maintain peer list (3-8 connections)
+    - Dynamically connect to new peers using an ADDPEER command.
+
+7. Store messages in an in-memory map
+    - Key = destination group ID, Value = queue/list of messages.
+
+8. Implement logging
+    - Log all relevant events with timestamps.
+
+9. Test the system
+    - Use the client to send commands and verify server behavior.
+
