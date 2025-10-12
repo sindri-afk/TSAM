@@ -19,3 +19,7 @@ In summary, the key difference is that TCP provides a reliable, ordered, and err
 <command> The actual command or data being sent
 <ETX> End of Text
 
+
+Discuss within the class how to implement a protocol
+
+
