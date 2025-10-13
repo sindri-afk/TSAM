@@ -1,0 +1,16 @@
+[2025-10-13 17:36:58] Client connected from 127.0.0.1:64326
+[2025-10-13 17:36:58] Received valid framed message from 127.0.0.1
+[2025-10-13 17:36:58] RECV: HELO,A5_TEST
+[2025-10-13 17:36:58] RECV: HELO from A5_TEST
+[2025-10-13 17:36:58] Added server A5_TEST to connected servers list
+[2025-10-13 17:36:58] Sending SERVERS response: SERVERS,A5_TEST,,0
+[2025-10-13 17:36:58] SENT: SERVERS,A5_TEST,,0
+[2025-10-13 17:36:58] Client disconnected: 127.0.0.1:64326
+[2025-10-13 17:40:43] Client connected from 127.0.0.1:64464
+[2025-10-13 17:40:43] Received valid framed message from 127.0.0.1
+[2025-10-13 17:40:43] RECV: HELO,A5_TEST
+[2025-10-13 17:40:43] RECV: HELO from A5_TEST
+[2025-10-13 17:40:43] Added server A5_TEST to connected servers list
+[2025-10-13 17:40:43] Sending SERVERS response: SERVERS,A5_TEST,,0
+[2025-10-13 17:40:43] SENT: SERVERS,A5_TEST,,0
+[2025-10-13 17:40:43] Client disconnected: 127.0.0.1:64464
