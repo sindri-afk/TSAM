@@ -8,5 +8,3 @@ tsamgroup21: tsamgroup21.cpp
 
 clean:
 	rm -f client tsamgroup21
-
-.PHONY: all clean

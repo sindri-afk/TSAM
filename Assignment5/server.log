@@ -14,3 +14,26 @@
 [2025-10-13 17:40:43] Sending SERVERS response: SERVERS,A5_TEST,,0
 [2025-10-13 17:40:43] SENT: SERVERS,A5_TEST,,0
 [2025-10-13 17:40:43] Client disconnected: 127.0.0.1:64464
+[2025-10-18 11:50:12] Client connected from 127.0.0.1:62639
+[2025-10-18 11:50:12] Received valid framed message from 127.0.0.1
+[2025-10-18 11:50:12] RECV: HELO,A5_TEST
+[2025-10-18 11:50:12] RECV: HELO from A5_TEST
+[2025-10-18 11:50:12] Added server A5_TEST to connected servers list
+[2025-10-18 11:50:12] Sending SERVERS response: SERVERS,A5_TEST,,0
+[2025-10-18 11:50:12] SENT: SERVERS,A5_TEST,,0
+[2025-10-18 11:50:12] Client disconnected: 127.0.0.1:62639
+[2025-10-18 11:57:07] Client connected from 127.0.0.1:62786
+[2025-10-18 11:57:07] Received valid framed message from 127.0.0.1
+[2025-10-18 11:57:07] RECV: HELO,A5_TEST
+[2025-10-18 11:57:07] RECV: HELO from A5_TEST
+[2025-10-18 11:57:07] Added server A5_TEST to connected servers list
+[2025-10-18 11:57:07] Sending SERVERS response: SERVERS,A5_TEST,,0
+[2025-10-18 11:57:07] SENT: SERVERS,A5_TEST,,0
+[2025-10-18 11:57:07] Received valid framed message from 127.0.0.1
+[2025-10-18 11:57:07] RECV: SERVERS
+[2025-10-18 11:57:07] Sending SERVERS response: SERVERS,A5_TEST,,0
+[2025-10-18 11:57:07] SENT: SERVERS,A5_TEST,,0
+[2025-10-18 11:57:07] Received valid framed message from 127.0.0.1
+[2025-10-18 11:57:07] RECV: SENDMSG,A5_21,A5_TEST,Hello from test client!
+[2025-10-18 11:57:07] Stored message from A5_TEST to A5_21: Hello from test client!
+[2025-10-18 11:58:10] Client disconnected: 127.0.0.1:62786

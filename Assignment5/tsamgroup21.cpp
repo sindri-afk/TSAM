@@ -59,6 +59,7 @@ void log_message(const std::string& message) {
 }
 
 // Message protocol functions
+// This function will be used to frame messages that we send to other servers
 std::string frameMessage(const std::string& command) {
     uint16_t length = 5 + command.length(); // SOH + length(2) + STX + command + ETX
     uint16_t networkLength = htons(length);
@@ -73,6 +74,7 @@ std::string frameMessage(const std::string& command) {
     return framedMessage;
 }
 
+// This function will be used to parse received messages and extract the command
 std::string parseMessage(const char* buffer, ssize_t length) {
     if (length < 5 || buffer[0] != SOH || buffer[3] != STX || buffer[length-1] != ETX) {
         return "";
@@ -89,6 +91,7 @@ std::string parseMessage(const char* buffer, ssize_t length) {
     return std::string(buffer + 4, length - 5);
 }
 
+// This function will be used to actually send framed messages to other servers
 bool sendFramedMessage(int socket, const std::string& command) {
     std::string framedMessage = frameMessage(command);
     ssize_t sent = send(socket, framedMessage.c_str(), framedMessage.length(), 0);
@@ -99,14 +102,23 @@ bool sendFramedMessage(int socket, const std::string& command) {
 // Function declarations
 void start_server(int port);
 void handle_client(int client_sock, sockaddr_in client_addr);
-void handle_server_command(int client_sock, const std::string& command);
-void log_message(const std::string& message);
-std::string process_helo(const std::string& fromGroupId);
-std::string process_servers_request();
-std::string process_getmsgs(const std::string& groupId);
-void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupId, const std::string& content);
-std::string process_statusreq();
 
+// This function will process the SERVERS command and return the list of connected servers
+std::string process_servers_request() {
+    std::string response = "SERVERS";
+    std::lock_guard<std::mutex> lock(serversMutex);
+    
+    for (size_t i = 0; i < connectedServers.size(); ++i) {
+        if (i == 0) response += ",";
+        else response += ";";
+        
+        const auto& server = connectedServers[i];
+        response += server.groupId + "," + server.host + "," + std::to_string(server.port);
+    }
+    
+    log_message("Sending SERVERS response: " + response);
+    return response;
+}
 
 // Command processing functions
 std::string process_helo(const std::string& fromGroupId) {
@@ -137,21 +149,6 @@ std::string process_helo(const std::string& fromGroupId) {
     return process_servers_request(); // Reply with SERVERS command
 }
 
-std::string process_servers_request() {
-    std::string response = "SERVERS";
-    std::lock_guard<std::mutex> lock(serversMutex);
-    
-    for (size_t i = 0; i < connectedServers.size(); ++i) {
-        if (i == 0) response += ",";
-        else response += ";";
-        
-        const auto& server = connectedServers[i];
-        response += server.groupId + "," + server.host + "," + std::to_string(server.port);
-    }
-    
-    log_message("Sending SERVERS response: " + response);
-    return response;
-}
 
 std::string process_getmsgs(const std::string& groupId) {
     std::lock_guard<std::mutex> lock(messagesMutex);
@@ -169,6 +166,7 @@ std::string process_getmsgs(const std::string& groupId) {
     return response;
 }
 
+// This function will process the SENDMSG command and store the message for later delivery
 void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupId, const std::string& content) {
     Message msg;
     msg.toGroupId = toGroupId;
@@ -176,6 +174,7 @@ void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupI
     msg.content = content;
     
     {
+        // Store the message in the pendingMessages queue because the recipient might not be connected
         std::lock_guard<std::mutex> lock(messagesMutex);
         pendingMessages[toGroupId].push(msg);
     }
@@ -183,6 +182,7 @@ void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupI
     log_message("Stored message from " + fromGroupId + " to " + toGroupId + ": " + content);
 }
 
+// This function will process the STATUSREQ command and return the status of pending messages
 std::string process_statusreq() {
     std::string response = "STATUSRESP";
     std::lock_guard<std::mutex> lock(messagesMutex);
@@ -204,12 +204,69 @@ std::string process_statusreq() {
     return response;
 }
 
+// 
+
+std::string sendInstructorServerHelo() {
+    std::string command = "HELO," + myGroupId; 
+    int port = 5001;
+
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        std::cerr << "Error: Could not create socket to connect to instructor server.\n";
+        return "";
+    }
+
+    // here we are going to connect to the instructor server running on 130.208.246.98 on port 5001
+    sockaddr_in instructor_address{};
+    instructor_address.sin_family = AF_INET;
+    instructor_address.sin_port = htons(port);
+    instructor_address.sin_addr.s_addr = inet_addr("130.208.246.98");
+
+    std::cout << "[INFO] Connecting to instructor server at 130.208.246.98:" << "port: " << port << std::endl;
+
+    if (connect(sock, (struct sockaddr*)&instructor_address, sizeof(instructor_address)) < 0) {
+        log_message("Error: Could not connect to instructor server.");
+        std::cout << "[ERROR] Could not connect to instructor server." << std::endl;
+        close(sock);
+        return "";
+    }
+    std::cout << "[INFO] Connected to instructor server." << std::endl;
+    log_message("Connected to instructor server.");
+
+    if (!sendFramedMessage(sock, command)) {
+        log_message("Error: Could not send HELO to instructor server.");
+        std::cout << "[ERROR] Could not send HELO to instructor server." << std::endl;
+        close(sock);
+        return "";
+    }
+
+    std::cout << "[INFO] Sent HELO to instructor server." << std::endl;
+
+    // receive respsonse
+    char buffer[1024];
+    ssize_t received = recv(sock, buffer, sizeof(buffer), 0);
+    if (received > 0) {
+        std::string response = parseMessage(buffer, received);
+        log_message("RECV from instructor server: " + response);
+        std::cout << "[INFO] Received from instructor server: " << response << std::endl;
+        close(sock);
+        return response;
+    } else {
+        log_message("Error: Could not receive response from instructor server.");
+        std::cout << "[ERROR] Could not receive response from instructor server." << std::endl;
+        close(sock);
+        return "";
+    }
+}
+
+// This function will handle commands received from a connected client
 void handle_server_command(int client_sock, const std::string& command) {
     log_message("RECV: " + command);
     
     std::string response = "";
     
     if (command.substr(0, 4) == "HELO") {
+        // we want to find the comma, and then extract the groupID
         size_t commaPos = command.find(',');
         if (commaPos != std::string::npos) {
             std::string fromGroupId = command.substr(commaPos + 1);
@@ -259,6 +316,7 @@ int main(int argc, char* argv[]) {
     }
     int port = std::stoi(argv[1]);
     start_server(port);
+    sendInstructorServerHelo();
     return 0; 
 }
 
@@ -304,8 +362,6 @@ void start_server(int port) {
     }
     std::cout << "[INFO] Server is now listening for connections...\n";
 
-    
-
     while (true) {
         // 5. Accept an incoming connection; this call blocks until a client connects
         // when a client connects, we get a new socket dedicated to this client
@@ -325,6 +381,9 @@ void start_server(int port) {
 
 }
 
+// This function will handle communication with a connected client
+// it will read messages, format them in the correct format which we have defined
+// and it will the determine the what function to call based on the command.
 void handle_client(int client_sock, sockaddr_in client_addr) {
     char client_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &client_addr.sin_addr, client_ip, INET_ADDRSTRLEN);
