@@ -26,3 +26,13 @@ once that works we have the autonomous server foundation and we can move to:
 2. command handling(HELO, SERVERS, KEEPALIVE,N, GETMSGS, SENDMSG, STATUSREQ, STATUSRESP)
 3. peer maintenance logic
 4. logging and in-memory storage 
+
+
+-- 18.okt update!!
+a. done
+b. done
+c. done
+d. NOT done yet
+
+Your server can receive messages when others send them to you, but you don't actively fetch messages that might be waiting for you on other servers.
+

@@ -1,0 +1,7 @@
+
+
+what is polling? Polling means actively asking other servers "Do you have any messages for me?" at regular intervals, rather than just waiting passively for messages to arrive.
+- Think of it like checking your mailbox:
+  - Passive approach (what you have now): Only receive mail when someone delivers it to your door
+  - Polling approach (what you need): Regularly walk to the mailbox and check if there's mail waiting
+

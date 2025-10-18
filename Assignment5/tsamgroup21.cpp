@@ -39,10 +39,10 @@ struct Message {
 
 // Global variables for server state
 std::vector<ServerInfo> connectedServers;
-std::map<std::string, std::queue<Message>> pendingMessages;
-std::mutex serversMutex;
-std::mutex messagesMutex;
-std::string myGroupId = "A5_21"; // Change this to your actual group ID
+std::map<std::string, std::queue<Message>> pendingMessages; // key: toGroupId, value: queue of messages
+std::mutex serversMutex; // this mutex will protect access to the connectedServers 
+std::mutex messagesMutex; // this mutex will protect access to the pendingMessages
+std::string myGroupId = "A5_21"; // our group ID
 
 // Logging function
 void log_message(const std::string& message) {
@@ -362,6 +362,7 @@ void start_server(int port) {
     }
 
     // 3. Bind the socket to the given port; assigning a local address/port to the socket
+    // This makes our server accessible to other groups on the network
     server_addr.sin_family = AF_INET;         // IPv4
     server_addr.sin_addr.s_addr = INADDR_ANY; // accept connections on any network interface
     server_addr.sin_port = htons(port);       // convert port to network byte order
@@ -372,7 +373,7 @@ void start_server(int port) {
         return;
     }
     std::cout << "[INFO] Server bound to port " << port << ".\n";
-
+    
     // 4. Tell the OS we want to listen for incoming connections
     if (listen(sock, 5) < 0) {
         std::cerr << "Error: Listen failed.\n";
