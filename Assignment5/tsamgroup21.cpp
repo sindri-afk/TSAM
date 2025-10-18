@@ -127,21 +127,24 @@ std::string process_helo(const std::string& fromGroupId) {
     
     // Add the connecting server to our list if not already present
     {
-        std::lock_guard<std::mutex> lock(serversMutex);
+        std::lock_guard<std::mutex> lock(serversMutex); // Lock the servers list
         bool found = false;
-        for (const auto& server : connectedServers) {
+        for (const auto& server : connectedServers) { // here we are essentially checking if we already have this server in our list
             if (server.groupId == fromGroupId) {
                 found = true;
-                break;
+                break; // already connected so we break
             }
         }
         
         if (!found && connectedServers.size() < 8) { // Max 8 connections
-            ServerInfo newServer;
+            ServerInfo newServer; // create a new server info object so that we can store it and later use it 
             newServer.groupId = fromGroupId;
+            // also placeholder because we shouldn't be hardcoding these values here
+            newServer.port = 4021; // Placeholder port, would need to be extracted from connection info
+            newServer.host = "127.0.0.1"; // Placeholder host, would need to be extracted from connection info
             newServer.connected = true;
             // Note: host and port would need to be extracted from connection info
-            connectedServers.push_back(newServer);
+            connectedServers.push_back(newServer); // add to our list of connected servers
             log_message("Added server " + fromGroupId + " to connected servers list");
         }
     }
@@ -167,7 +170,7 @@ std::string process_getmsgs(const std::string& groupId) {
 }
 
 // This function will process the SENDMSG command and store the message for later delivery
-void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupId, const std::string& content) {
+std::string process_sendmsg(const std::string& toGroupId, const std::string& fromGroupId, const std::string& content) {
     Message msg;
     msg.toGroupId = toGroupId;
     msg.fromGroupId = fromGroupId;
@@ -180,6 +183,8 @@ void process_sendmsg(const std::string& toGroupId, const std::string& fromGroupI
     }
     
     log_message("Stored message from " + fromGroupId + " to " + toGroupId + ": " + content);
+
+    return "OK";
 }
 
 // This function will process the STATUSREQ command and return the status of pending messages
@@ -290,7 +295,7 @@ void handle_server_command(int client_sock, const std::string& command) {
             std::string toGroupId = command.substr(firstComma + 1, secondComma - firstComma - 1);
             std::string fromGroupId = command.substr(secondComma + 1, thirdComma - secondComma - 1);
             std::string content = command.substr(thirdComma + 1);
-            process_sendmsg(toGroupId, fromGroupId, content);
+            response = process_sendmsg(toGroupId, fromGroupId, content); // lets store the respoonse 
         }
     }
     else if (command.substr(0, 9) == "KEEPALIVE") {
@@ -315,9 +320,23 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     int port = std::stoi(argv[1]);
-    start_server(port);
+
+    // start server in a separate thread so it doesn't block
+    std::thread server_thread([port] () {
+        start_server(port);
+    });
+    server_thread.detach();
+    // give the server a moment to start
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // now connect to the instructor server and send HELO
     sendInstructorServerHelo();
-    return 0; 
+
+    // keep the main thread alive
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+    }
+    return 0;
 }
 
 void start_server(int port) {
